@@ -1,0 +1,95 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# PyTorch Models (large files)
+*.pth
+*.pt
+*.ckpt
+
+# OCT Images and Datasets
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.tif
+*.tiff
+*.dcm
+*.dicom
+
+# Dataset directories
+CNV*/
+DME*/
+drusen*/
+NORMAL*/
+combined_data/
+uploads/
+predictions/
+results/
+xai_explanations/
+
+# Training metrics and graphs
+training_metrics.png
+*.png
+confusion_matrix*.png
+training_history.png
+test_predictions_sample.png
+
+# Model outputs
+classification_models/
+*.json
+model_summary.json
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+
+# Static assets (if containing generated images)
+static/*.png
+static/*.jpg
+static/*.jpeg
+

@@ -1,0 +1,23 @@
+# OCT Retina Segmentation Web Application Requirements
+
+# Core Framework
+Flask>=3.0.0
+Werkzeug>=3.0.1
+
+# Deep Learning (flexible versions for compatibility)
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Image Processing
+opencv-python>=4.8.0
+numpy>=1.24.0
+Pillow>=10.0.0
+matplotlib>=3.8.0
+
+# Additional utilities (optional - only if needed)
+# scipy>=1.11.0
+# scikit-image>=0.22.0
+
+# Optional but recommended for production
+# gunicorn>=21.2.0
+

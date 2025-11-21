@@ -1,0 +1,17 @@
+# OCT Preprocessing Pipeline Requirements
+
+# Core dependencies
+numpy>=1.21.0
+opencv-python>=4.5.0
+scikit-image>=0.18.0
+scipy>=1.7.0
+matplotlib>=3.4.0
+tqdm>=4.62.0
+
+# Optional dependencies for advanced features
+Pillow>=8.3.0
+
+# For notebook support
+jupyter>=1.0.0
+ipywidgets>=7.6.0
+

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCT Retina Analysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="title">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    OCT Retina Analysis Platform
+                </h1>
+                <p class="subtitle">AI-Powered Retinal Disease Detection, Segmentation & Classification</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Section -->
+            <section class="upload-section">
+                <div class="upload-card">
+                    <div class="upload-area" id="uploadArea">
+                        <input type="file" id="fileInput" accept=".jpg,.jpeg,.png" hidden>
+                        <div class="upload-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <h3 class="upload-title">Upload OCT Image</h3>
+                        <p class="upload-text">Drag and drop your image here or click to browse</p>
+                        <p class="upload-hint">Supports: PNG, JPG, JPEG (Max 16MB)</p>
+                        <button class="upload-button" id="uploadButton">Choose File</button>
+                    </div>
+                    
+                    <!-- Preview Section -->
+                    <div class="preview-section" id="previewSection" style="display: none;">
+                        <h4>Selected Image</h4>
+                        <img id="previewImage" alt="Preview" class="preview-img">
+                        
+                        <!-- Analysis Options -->
+                        <div class="analysis-options">
+                            <h4>Choose Analysis Type</h4>
+                            <div class="options-grid">
+                                <button class="option-btn segment-btn" id="segmentButton">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="3" width="7" height="7"></rect>
+                                        <rect x="14" y="3" width="7" height="7"></rect>
+                                        <rect x="14" y="14" width="7" height="7"></rect>
+                                        <rect x="3" y="14" width="7" height="7"></rect>
+                                    </svg>
+                                    <span>Segment Image</span>
+                                    <p class="option-desc">Identify and segment retinal layers</p>
+                                </button>
+                                
+                                <button class="option-btn classify-btn" id="classifyButton">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                                    </svg>
+                                    <span>Classify Disease</span>
+                                    <p class="option-desc">Classify into CNV, DME, Drusen, or Normal</p>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="preview-actions">
+                            <button class="btn btn-secondary" id="resetButton">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="1 4 1 10 7 10"></polyline>
+                                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                                </svg>
+                                Upload Different Image
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Loading Spinner -->
+            <div class="loading" id="loadingSpinner" style="display: none;">
+                <div class="spinner"></div>
+                <p id="loadingText">Processing image... Please wait</p>
+            </div>
+
+            <!-- Segmentation Results Section -->
+            <section class="results-section" id="segmentationResults" style="display: none;">
+                <h2 class="section-title">Segmentation Results</h2>
+                
+                <!-- Alert -->
+                <div class="alert alert-success">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>Segmentation completed successfully!</span>
+                </div>
+
+                <!-- Image Results Grid -->
+                <div class="results-grid">
+                    <!-- Original Image -->
+                    <div class="result-card">
+                        <h3 class="result-title">Original Image</h3>
+                        <div class="result-image-container">
+                            <img id="segOriginalImage" alt="Original" class="result-img">
+                        </div>
+                        <button class="download-btn" onclick="downloadImage('segOriginalImage', 'original.png')">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Download
+                        </button>
+                    </div>
+
+                    <!-- Segmentation Mask -->
+                    <div class="result-card">
+                        <h3 class="result-title">Segmentation Mask</h3>
+                        <div class="result-image-container">
+                            <img id="segmentedImage" alt="Segmented" class="result-img">
+                        </div>
+                        <button class="download-btn" onclick="downloadImage('segmentedImage', 'segmentation_mask.png')">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Download
+                        </button>
+                    </div>
+
+                    <!-- Overlay Image -->
+                    <div class="result-card">
+                        <h3 class="result-title">Overlay Visualization</h3>
+                        <div class="result-image-container">
+                            <img id="overlayImage" alt="Overlay" class="result-img">
+                        </div>
+                        <button class="download-btn" onclick="downloadImage('overlayImage', 'overlay.png')">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Download
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Training Metrics Visualization -->
+                <div class="metrics-card">
+                    <h3 class="metrics-title">Segmentation Model Training History</h3>
+                    <div class="metrics-image-container">
+                        <img id="segTrainingMetrics" alt="Training Metrics" class="metrics-img">
+                    </div>
+                    <p class="metrics-description">
+                        Training and validation metrics showing how the segmentation model learned to identify retinal layers over multiple epochs.
+                    </p>
+                </div>
+
+                <!-- Class Distribution -->
+                <div class="stats-card">
+                    <h3 class="stats-title">Layer Distribution</h3>
+                    <div id="segClassDistribution" class="class-distribution">
+                        <!-- Will be populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="result-actions">
+                    <button class="btn btn-primary" id="analyzeAnotherButton">
+                        Analyze Another Image
+                    </button>
+                </div>
+            </section>
+
+            <!-- Classification Results Section -->
+            <section class="results-section" id="classificationResults" style="display: none;">
+                <h2 class="section-title">Classification Results</h2>
+                
+                <!-- Alert -->
+                <div class="alert alert-success">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span id="classificationMessage">Classification completed successfully!</span>
+                </div>
+
+                <!-- Original Image and Prediction -->
+                <div class="classification-main">
+                    <div class="result-card">
+                        <h3 class="result-title">Input Image</h3>
+                        <div class="result-image-container">
+                            <img id="clsOriginalImage" alt="Original" class="result-img">
+                        </div>
+                    </div>
+                    
+                    <div class="prediction-card">
+                        <h3 class="prediction-title">Predicted Diagnosis</h3>
+                        <div class="prediction-result" id="predictionResult">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                        
+                        <h4 class="probability-title">Class Probabilities</h4>
+                        <div id="classProbabilities" class="class-probabilities">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Performance Metrics -->
+                <div class="section-subtitle">
+                    <h3>Model Performance Metrics</h3>
+                </div>
+
+                <!-- Confusion Matrix and Training History -->
+                <div class="metrics-grid">
+                    <div class="metrics-card">
+                        <h3 class="metrics-title">Confusion Matrix</h3>
+                        <div class="metrics-image-container">
+                            <img id="confusionMatrix" alt="Confusion Matrix" class="metrics-img">
+                        </div>
+                        <p class="metrics-description">
+                            Shows how the model performs across all disease categories on the test set.
+                        </p>
+                    </div>
+
+                    <div class="metrics-card">
+                        <h3 class="metrics-title">Training History</h3>
+                        <div class="metrics-image-container">
+                            <img id="trainingHistory" alt="Training History" class="metrics-img">
+                        </div>
+                        <p class="metrics-description">
+                            Model training progress showing loss and accuracy over epochs.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Model Summary -->
+                <div class="stats-card">
+                    <h3 class="stats-title">Model Summary</h3>
+                    <div id="modelSummary" class="model-summary">
+                        <!-- Will be populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="result-actions">
+                    <button class="btn btn-secondary" id="explainButton" style="margin-right: 10px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        Explain This Prediction
+                    </button>
+                    <button class="btn btn-primary" id="classifyAnotherButton">
+                        Analyze Another Image
+                    </button>
+                </div>
+            </section>
+
+            <!-- XAI Explanation Results Section -->
+            <section class="results-section" id="xaiResults" style="display: none;">
+                <h2 class="section-title">Explainable AI - Model Decision Analysis</h2>
+                
+                <!-- Alert -->
+                <div class="alert alert-info">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <span id="xaiMessage">XAI explanations generated successfully!</span>
+                </div>
+
+                <!-- Prediction Summary -->
+                <div class="prediction-card xai-prediction-summary">
+                    <h3 class="prediction-title">Prediction Summary</h3>
+                    <div class="xai-summary-content" id="xaiSummary">
+                        <!-- Will be populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- XAI Methods Comparison -->
+                <div class="section-subtitle">
+                    <h3>Explainability Methods</h3>
+                    <p>Multiple visualization techniques showing which regions influenced the model's decision</p>
+                </div>
+
+                <!-- XAI Visualizations Grid -->
+                <div class="xai-grid">
+                    <!-- Grad-CAM -->
+                    <div class="result-card xai-card">
+                        <h3 class="result-title">
+                            Grad-CAM
+                            <span class="info-icon" title="Gradient-weighted Class Activation Mapping: Highlights regions that most strongly influence the prediction">ⓘ</span>
+                        </h3>
+                        <div class="result-image-container">
+                            <img id="xaiGradcam" alt="Grad-CAM" class="result-img">
+                        </div>
+                        <p class="xai-description">Red areas show high importance, blue areas show low importance</p>
+                        <button class="download-btn" onclick="downloadImage('xaiGradcam', 'gradcam_explanation.png')">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Download
+                        </button>
+                    </div>
+
+                    <!-- Grad-CAM with Bounding Boxes -->
+                    <div class="result-card xai-card">
+                        <h3 class="result-title">
+                            Key Regions
+                            <span class="info-icon" title="Bounding boxes highlight the top 5 most important regions">ⓘ</span>
+                        </h3>
+                        <div class="result-image-container">
+                            <img id="xaiGradcamBbox" alt="Key Regions" class="result-img">
+                        </div>
+                        <p class="xai-description">Numbered boxes show most important regions (#1 = highest importance)</p>
+                        <button class="download-btn" onclick="downloadImage('xaiGradcamBbox', 'key_regions.png')">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Download
+                        </button>
+                    </div>
+
+                    <!-- LIME -->
+                    <div class="result-card xai-card">
+                        <h3 class="result-title">
+                            LIME Explanation
+                            <span class="info-icon" title="Local Interpretable Model-agnostic Explanations: Shows which image regions contribute to the prediction">ⓘ</span>
+                        </h3>
+                        <div class="result-image-container">
+                            <img id="xaiLime" alt="LIME" class="result-img">
+                        </div>
+                        <p class="xai-description">Highlighted boundaries show important image superpixels</p>
+                        <button class="download-btn" onclick="downloadImage('xaiLime', 'lime_explanation.png')">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Download
+                        </button>
+                    </div>
+
+                    <!-- Integrated Gradients -->
+                    <div class="result-card xai-card">
+                        <h3 class="result-title">
+                            Integrated Gradients
+                            <span class="info-icon" title="Attribution method showing pixel-level contributions to the prediction">ⓘ</span>
+                        </h3>
+                        <div class="result-image-container">
+                            <img id="xaiIG" alt="Integrated Gradients" class="result-img">
+                        </div>
+                        <p class="xai-description">Brighter areas indicate higher pixel-level importance</p>
+                        <button class="download-btn" onclick="downloadImage('xaiIG', 'integrated_gradients.png')">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Download
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Comparison Visualization -->
+                <div class="metrics-card">
+                    <h3 class="metrics-title">Comparison Dashboard</h3>
+                    <div class="metrics-image-container">
+                        <img id="xaiComparison" alt="XAI Comparison" class="metrics-img">
+                    </div>
+                    <p class="metrics-description">
+                        Side-by-side comparison of all explanation methods with prediction probabilities
+                    </p>
+                    <button class="download-btn" onclick="downloadImage('xaiComparison', 'xai_comparison.png')">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Download
+                    </button>
+                </div>
+
+                <!-- Explanation Metrics -->
+                <div class="stats-card">
+                    <h3 class="stats-title">Quantitative Metrics</h3>
+                    <div id="xaiMetrics" class="xai-metrics">
+                        <!-- Will be populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Interpretation Guide -->
+                <div class="xai-guide-card">
+                    <h3 class="stats-title">How to Interpret These Explanations</h3>
+                    <div class="xai-guide-content">
+                        <div class="xai-guide-item">
+                            <h4>✓ Clinical Validation Checklist</h4>
+                            <ul>
+                                <li>Does the model focus on relevant anatomical structures?</li>
+                                <li>Are pathological features (fluid, deposits) highlighted?</li>
+                                <li>Is the model ignoring irrelevant artifacts or edges?</li>
+                                <li>Do all three XAI methods show consistent focus areas?</li>
+                                <li>Does the explanation align with clinical reasoning?</li>
+                            </ul>
+                        </div>
+                        <div class="xai-guide-item">
+                            <h4>📊 Understanding the Metrics</h4>
+                            <p><strong>Attribution Coverage:</strong> Percentage of image contributing to decision (higher = more distributed focus)</p>
+                            <p><strong>Peak Location:</strong> Coordinates of most important region</p>
+                            <p><strong>Mean/Max Attribution:</strong> Intensity of model focus</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="result-actions">
+                    <button class="btn btn-primary" id="xaiAnotherButton">
+                        Analyze Another Image
+                    </button>
+                </div>
+            </section>
+
+            <!-- Error Section -->
+            <div class="alert alert-error" id="errorAlert" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                <span id="errorMessage"></span>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Powered by U-Net & ResNet50 Deep Learning Models | OCT Major Project 2025</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

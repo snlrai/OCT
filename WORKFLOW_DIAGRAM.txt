@@ -1,0 +1,454 @@
+===============================================================================
+                OCT ANALYSIS WEB APPLICATION - WORKFLOW DIAGRAM
+===============================================================================
+
+SYSTEM ARCHITECTURE
+===================
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         USER'S WEB BROWSER                              │
+│                                                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐ │
+│  │                   Frontend (HTML/CSS/JS)                         │ │
+│  │                                                                  │ │
+│  │  • Upload interface                                              │ │
+│  │  • Analysis mode selector (Segment / Classify)                   │ │
+│  │  • Results visualization                                         │ │
+│  │  • Download functionality                                        │ │
+│  └──────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↕ HTTP/JSON
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         FLASK SERVER (app.py)                           │
+│                                                                         │
+│  ┌──────────────┐         ┌──────────────┐         ┌───────────────┐  │
+│  │   Routing    │────────→│ Preprocessing│────────→│   Inference   │  │
+│  │              │         │              │         │               │  │
+│  │ /           │         │ • Resize     │         │ • Segment     │  │
+│  │ /segment    │         │ • Normalize  │         │ • Classify    │  │
+│  │ /classify   │         │ • Enhance    │         │               │  │
+│  │ /health     │         │              │         │               │  │
+│  └──────────────┘         └──────────────┘         └───────────────┘  │
+│                                                            ↓           │
+│  ┌──────────────┐         ┌──────────────┐         ┌───────────────┐  │
+│  │   Response   │←────────│Postprocessing│←────────│   Results     │  │
+│  │   JSON       │         │              │         │               │  │
+│  │              │         │ • Colorize   │         │               │  │
+│  │ • Images     │         │ • Overlay    │         │               │  │
+│  │ • Metrics    │         │ • Stats      │         │               │  │
+│  │ • Data       │         │              │         │               │  │
+│  └──────────────┘         └──────────────┘         └───────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↕
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         DEEP LEARNING MODELS                            │
+│                                                                         │
+│  ┌────────────────────────────┐    ┌─────────────────────────────┐    │
+│  │  Segmentation Model        │    │  Classification Model       │    │
+│  │  (U-Net)                   │    │  (ResNet50)                 │    │
+│  │                            │    │                             │    │
+│  │  • Input: 512×512 RGB      │    │  • Input: 224×224 RGB       │    │
+│  │  • Output: 13 classes      │    │  • Output: 4 classes        │    │
+│  │  • File: unet_combined_    │    │  • File: best_oct_          │    │
+│  │    best.pth                │    │    classifier.pth           │    │
+│  └────────────────────────────┘    └─────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────────┘
+
+
+USER INTERACTION FLOW
+=====================
+
+START
+  │
+  ↓
+┌────────────────────────┐
+│ User Opens Browser     │
+│ http://localhost:5000  │
+└────────────────────────┘
+  │
+  ↓
+┌────────────────────────┐
+│ Upload OCT Image       │
+│ (Drag & Drop / Click)  │
+└────────────────────────┘
+  │
+  ↓
+┌────────────────────────┐
+│ Preview Image Shown    │
+└────────────────────────┘
+  │
+  ├─────────────────────────────────────┐
+  │                                     │
+  ↓                                     ↓
+┌────────────────────┐        ┌────────────────────┐
+│ Click "Segment     │        │ Click "Classify    │
+│ Image" Button      │        │ Disease" Button    │
+└────────────────────┘        └────────────────────┘
+  │                                     │
+  ↓                                     ↓
+┌────────────────────┐        ┌────────────────────┐
+│ POST /segment      │        │ POST /classify     │
+└────────────────────┘        └────────────────────┘
+  │                                     │
+  ↓                                     ↓
+┌────────────────────┐        ┌────────────────────┐
+│ Preprocess for     │        │ Preprocess for     │
+│ Segmentation       │        │ Classification     │
+│ • 512×512          │        │ • 224×224          │
+│ • Denoise          │        │ • ImageNet norm    │
+│ • CLAHE            │        │                    │
+└────────────────────┘        └────────────────────┘
+  │                                     │
+  ↓                                     ↓
+┌────────────────────┐        ┌────────────────────┐
+│ Run U-Net Model    │        │ Run ResNet50       │
+│ Inference          │        │ Inference          │
+└────────────────────┘        └────────────────────┘
+  │                                     │
+  ↓                                     ↓
+┌────────────────────┐        ┌────────────────────┐
+│ Generate:          │        │ Generate:          │
+│ • Colored mask     │        │ • Predicted class  │
+│ • Overlay          │        │ • Probabilities    │
+│ • Distribution     │        │ • Confidence       │
+│ • Metrics          │        │ • Metrics          │
+└────────────────────┘        └────────────────────┘
+  │                                     │
+  └──────────────┬──────────────────────┘
+                 │
+                 ↓
+        ┌────────────────────┐
+        │ Display Results    │
+        │ in Browser         │
+        └────────────────────┘
+                 │
+                 ↓
+        ┌────────────────────┐
+        │ User Reviews        │
+        │ • Views images      │
+        │ • Checks metrics    │
+        │ • Downloads results │
+        └────────────────────┘
+                 │
+                 ↓
+        ┌────────────────────┐
+        │ "Analyze Another"  │
+        │ or Exit            │
+        └────────────────────┘
+
+
+SEGMENTATION PIPELINE DETAIL
+=============================
+
+1. INPUT PREPROCESSING
+   ↓
+   ┌─────────────────────────────────┐
+   │ Original OCT Image              │
+   │ (Any size, Grayscale/Color)     │
+   └─────────────────────────────────┘
+                 ↓
+   ┌─────────────────────────────────┐
+   │ fastNlMeansDenoising            │
+   │ (Noise reduction)               │
+   └─────────────────────────────────┘
+                 ↓
+   ┌─────────────────────────────────┐
+   │ Unsharp Masking                 │
+   │ (Edge enhancement)              │
+   └─────────────────────────────────┘
+                 ↓
+   ┌─────────────────────────────────┐
+   │ CLAHE                           │
+   │ (Contrast enhancement)          │
+   └─────────────────────────────────┘
+                 ↓
+   ┌─────────────────────────────────┐
+   │ Convert to RGB                  │
+   └─────────────────────────────────┘
+                 ↓
+   ┌─────────────────────────────────┐
+   │ Resize to 512×512               │
+   └─────────────────────────────────┘
+                 ↓
+   ┌─────────────────────────────────┐
+   │ Normalize [0.5, 0.5, 0.5]       │
+   └─────────────────────────────────┘
+                 ↓
+2. U-NET INFERENCE
+   ↓
+   ┌─────────────────────────────────┐
+   │ Forward Pass                    │
+   │ Output: 13 channels             │
+   └─────────────────────────────────┘
+                 ↓
+   ┌─────────────────────────────────┐
+   │ Argmax (Get class per pixel)    │
+   └─────────────────────────────────┘
+                 ↓
+3. POSTPROCESSING
+   ↓
+   ┌─────────────────────────────────┐
+   │ Apply Color Map                 │
+   │ 0:Black, 1:Red, 2:Green, etc    │
+   └─────────────────────────────────┘
+                 ↓
+   ┌─────────────────────────────────┐
+   │ Create Overlay                  │
+   │ (Original + Mask blend)         │
+   └─────────────────────────────────┘
+                 ↓
+   ┌─────────────────────────────────┐
+   │ Calculate Statistics            │
+   │ (% per layer)                   │
+   └─────────────────────────────────┘
+                 ↓
+4. RESULTS
+   ↓
+   ┌─────────────────────────────────┐
+   │ Three Images + Metrics          │
+   │ • Original                      │
+   │ • Segmentation Mask             │
+   │ • Overlay                       │
+   │ • Layer Distribution Chart      │
+   │ • Training Metrics Plot         │
+   └─────────────────────────────────┘
+
+
+CLASSIFICATION PIPELINE DETAIL
+===============================
+
+1. INPUT PREPROCESSING
+   ↓
+   ┌─────────────────────────────────┐
+   │ Original OCT Image              │
+   │ (Any size, Color/Grayscale)     │
+   └─────────────────────────────────┘
+                 ↓
+   ┌─────────────────────────────────┐
+   │ Convert to RGB                  │
+   └─────────────────────────────────┘
+                 ↓
+   ┌─────────────────────────────────┐
+   │ Resize to 224×224               │
+   └─────────────────────────────────┘
+                 ↓
+   ┌─────────────────────────────────┐
+   │ Normalize (ImageNet stats)      │
+   │ mean=[0.485,0.456,0.406]        │
+   │ std=[0.229,0.224,0.225]         │
+   └─────────────────────────────────┘
+                 ↓
+2. RESNET50 INFERENCE
+   ↓
+   ┌─────────────────────────────────┐
+   │ Forward Pass through ResNet50   │
+   │ Output: 4 logits                │
+   └─────────────────────────────────┘
+                 ↓
+   ┌─────────────────────────────────┐
+   │ Softmax (Get probabilities)     │
+   └─────────────────────────────────┘
+                 ↓
+   ┌─────────────────────────────────┐
+   │ Argmax (Get predicted class)    │
+   └─────────────────────────────────┘
+                 ↓
+3. RESULTS PACKAGING
+   ↓
+   ┌─────────────────────────────────┐
+   │ Predicted Class                 │
+   │ • CNV / DME / DRUSEN / NORMAL   │
+   └─────────────────────────────────┘
+                 ↓
+   ┌─────────────────────────────────┐
+   │ Class Probabilities             │
+   │ • CNV: 1.2%                     │
+   │ • DME: 94.5%                    │
+   │ • DRUSEN: 3.1%                  │
+   │ • NORMAL: 1.2%                  │
+   └─────────────────────────────────┘
+                 ↓
+   ┌─────────────────────────────────┐
+   │ Load Model Metrics              │
+   │ • Confusion Matrix              │
+   │ • Training History              │
+   │ • Model Summary                 │
+   └─────────────────────────────────┘
+                 ↓
+4. DISPLAY
+   ↓
+   ┌─────────────────────────────────┐
+   │ Comprehensive Dashboard         │
+   │ • Original Image                │
+   │ • Prediction Badge (colored)    │
+   │ • Probability Bars              │
+   │ • Confusion Matrix              │
+   │ • Training History              │
+   │ • Model Summary Table           │
+   └─────────────────────────────────┘
+
+
+FILE ORGANIZATION
+=================
+
+Root Directory
+│
+├── app.py                     ← Flask application (MAIN BACKEND)
+│
+├── templates/
+│   └── index.html             ← Main HTML page (FRONTEND STRUCTURE)
+│
+├── static/
+│   ├── script.js              ← JavaScript logic (FRONTEND LOGIC)
+│   ├── style.css              ← Styling (FRONTEND STYLE)
+│   └── training_metrics.png   ← Segmentation training plot
+│
+├── classification_models/
+│   ├── best_oct_classifier.pth       ← Classification model weights
+│   ├── confusion_matrix.png          ← Classification confusion matrix
+│   ├── training_history.png          ← Classification training plot
+│   └── model_summary.json            ← Classification model info
+│
+├── unet_combined_best.pth     ← Segmentation model weights
+│
+├── uploads/                   ← Uploaded images stored here
+├── results/                   ← Segmentation results saved here
+├── predictions/               ← Classification results saved here
+│
+├── test_webapp.py             ← Setup verification script
+├── WEBAPP_UPDATE_README.md    ← Technical documentation
+├── USAGE_GUIDE.md             ← User guide
+├── UPDATE_COMPLETE.md         ← Summary of updates
+└── WORKFLOW_DIAGRAM.txt       ← This file
+
+
+DATA FLOW (SEGMENTATION)
+=========================
+
+[User uploads image.jpg]
+         ↓
+[Saved to uploads/image.jpg]
+         ↓
+[Preprocessed → 512×512 RGB tensor]
+         ↓
+[U-Net inference → 13-channel output]
+         ↓
+[Argmax → class mask]
+         ↓
+[Apply colors → colored_mask]
+         ↓
+[Blend with original → overlay]
+         ↓
+[Calculate stats → {background: 45%, GCL: 12%, ...}]
+         ↓
+[Convert to base64]
+         ↓
+[JSON response → Browser]
+         ↓
+[Display results]
+
+
+DATA FLOW (CLASSIFICATION)
+===========================
+
+[User uploads image.jpg]
+         ↓
+[Saved to uploads/image.jpg]
+         ↓
+[Preprocessed → 224×224 RGB tensor]
+         ↓
+[ResNet50 inference → 4 logits]
+         ↓
+[Softmax → [0.012, 0.945, 0.031, 0.012]]
+         ↓
+[Argmax → class 1 (DME)]
+         ↓
+[Load additional metrics from disk]
+         ↓
+[Convert images to base64]
+         ↓
+[JSON response → Browser]
+         ↓
+[Display prediction + metrics]
+
+
+API ENDPOINTS
+=============
+
+┌─────────────────────────────────────────────────────────────┐
+│  GET /                                                      │
+│  Returns: Main HTML page                                   │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│  POST /segment                                              │
+│  Input: multipart/form-data with 'file' field              │
+│  Returns: JSON with segmentation results                   │
+│  {                                                          │
+│    success: true,                                           │
+│    original_image: "data:image/png;base64,...",            │
+│    segmented_mask: "data:image/png;base64,...",            │
+│    overlay_image: "data:image/png;base64,...",             │
+│    class_distribution: {layer: percentage, ...},           │
+│    training_metrics: "data:image/png;base64,...",          │
+│    message: "Segmentation completed successfully!"         │
+│  }                                                          │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│  POST /classify                                             │
+│  Input: multipart/form-data with 'file' field              │
+│  Returns: JSON with classification results                 │
+│  {                                                          │
+│    success: true,                                           │
+│    original_image: "data:image/png;base64,...",            │
+│    predicted_class: "DME",                                  │
+│    class_probabilities: {CNV: 0.01, DME: 0.94, ...},       │
+│    confusion_matrix: "data:image/png;base64,...",          │
+│    training_history: "data:image/png;base64,...",          │
+│    model_summary: {...},                                    │
+│    message: "Classification completed! Predicted: DME"     │
+│  }                                                          │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│  GET /health                                                │
+│  Returns: Server and model status                          │
+│  {                                                          │
+│    status: "healthy",                                       │
+│    segmentation_model_loaded: true,                        │
+│    classification_model_loaded: true,                      │
+│    device: "cpu"                                           │
+│  }                                                          │
+└─────────────────────────────────────────────────────────────┘
+
+
+COLOR CODES
+===========
+
+Segmentation Layer Colors:
+  0  - Background           → Black      [0, 0, 0]
+  1  - GCL                  → Red        [255, 0, 0]
+  2  - INL                  → Green      [0, 255, 0]
+  3  - IPL                  → Blue       [0, 0, 255]
+  4  - ONL                  → Yellow     [255, 255, 0]
+  5  - OPL                  → Magenta    [255, 0, 255]
+  6  - RNFL                 → Cyan       [0, 255, 255]
+  7  - RPE                  → Orange     [255, 128, 0]
+  8  - CHOROID              → Purple     [128, 0, 255]
+  9  - INTRA-RETINAL-FLUID  → Pink       [255, 192, 203]
+  10 - SUB-RETINAL-FLUID    → Teal       [0, 128, 128]
+  11 - PED                  → Olive      [128, 128, 0]
+  12 - DRUSENOID-PED        → Silver     [192, 192, 192]
+
+Classification Prediction Badge Colors:
+  CNV     → Red gradient    (background: #ef4444 to #dc2626)
+  DME     → Orange gradient (background: #f59e0b to #d97706)
+  DRUSEN  → Purple gradient (background: #8b5cf6 to #7c3aed)
+  NORMAL  → Green gradient  (background: #10b981 to #059669)
+
+
+===============================================================================
+                              END OF DIAGRAM
+===============================================================================
+

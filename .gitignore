@@ -22,74 +22,71 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
 # Jupyter Notebook
 .ipynb_checkpoints
-*/.ipynb_checkpoints/*
+*.ipynb_checkpoints/
 
-# PyTorch Models (large files)
+# PyTorch
 *.pth
 *.pt
-*.ckpt
+*.onnx
 
-# OCT Images and Datasets
-*.jpg
-*.jpeg
-*.png
-*.bmp
-*.tif
-*.tiff
-*.dcm
-*.dicom
-
-# Dataset directories
+# Data
+data/
+datasets/
+combined_data/
 CNV*/
 DME*/
 drusen*/
 NORMAL*/
-combined_data/
+
+# Results and outputs
 uploads/
-predictions/
 results/
+predictions/
 xai_explanations/
-
-# Training metrics and graphs
+classification_models/*.png
+classification_models/*.json
 training_metrics.png
-*.png
-confusion_matrix*.png
-training_history.png
-test_predictions_sample.png
 
-# Model outputs
-classification_models/
-*.json
-model_summary.json
+# AWS
+aws_config/.env.aws
+*.pem
+*.key
+.aws/
 
-# IDE and Editor
+# Docker
+.dockerignore
+
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
 .DS_Store
 
-# Environment variables
-.env
-.env.local
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# CI/CD
+.github/secrets/
 
 # Logs
 *.log
+logs/
 
-# OS
-Thumbs.db
-.DS_Store
+# Model artifacts (keep structure, ignore content)
+local_model_registry/
+
+# Lambda deployment
+lambda_deploy/
+lambda_function.zip
 
 # Temporary files
 *.tmp
-*.temp
-
-# Static assets (if containing generated images)
-static/*.png
-static/*.jpg
-static/*.jpeg
-
+.cache/

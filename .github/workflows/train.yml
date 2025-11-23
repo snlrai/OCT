@@ -1,0 +1,93 @@
+name: Train OCT Models
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      model_type:
+        description: 'Model type to train'
+        required: true
+        default: 'classification'
+        type: choice
+        options:
+          - classification
+          - segmentation
+      experiment_name:
+        description: 'Experiment name'
+        required: true
+        type: string
+      num_epochs:
+        description: 'Number of epochs'
+        required: false
+        default: '50'
+        type: string
+  
+  # Trigger on new data upload to S3 (via webhook or scheduled)
+  # schedule:
+  #   - cron: '0 2 * * 0'  # Weekly at 2 AM on Sunday
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240  # 4 hours max
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements_mlops.txt
+          pip install -r requirements_preprocessing.txt
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      - name: Create AWS config
+        run: |
+          mkdir -p aws_config
+          cat > aws_config/.env.aws <<EOF
+          AWS_DEFAULT_REGION=${{ secrets.AWS_REGION }}
+          PROJECT_NAME=${{ secrets.PROJECT_NAME }}
+          S3_DATA_BUCKET=${{ secrets.S3_DATA_BUCKET }}
+          S3_MODELS_BUCKET=${{ secrets.S3_MODELS_BUCKET }}
+          S3_ARTIFACTS_BUCKET=${{ secrets.S3_ARTIFACTS_BUCKET }}
+          DYNAMODB_EXPERIMENTS_TABLE=${{ secrets.DYNAMODB_EXPERIMENTS_TABLE }}
+          DYNAMODB_MODELS_TABLE=${{ secrets.DYNAMODB_MODELS_TABLE }}
+          DYNAMODB_TRAINING_RUNS_TABLE=${{ secrets.DYNAMODB_TRAINING_RUNS_TABLE }}
+          EOF
+      
+      - name: Train model
+        run: |
+          python -m mlops.training_pipeline \
+            --model-type ${{ github.event.inputs.model_type }} \
+            --experiment-name ${{ github.event.inputs.experiment_name }} \
+            --use-s3 \
+            --epochs ${{ github.event.inputs.num_epochs }}
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: training-artifacts
+          path: |
+            classification_models/
+            results/
+          retention-days: 30
+      
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Training failed! Check the logs for details."
+          # Add notification logic (email, Slack, etc.)
+

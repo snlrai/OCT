@@ -1,0 +1,132 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'lambda/**'
+      - 'mlops/**'
+      - 'docker/**'
+      - '.github/workflows/deploy.yml'
+  
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: 'What to deploy'
+        required: true
+        default: 'lambda'
+        type: choice
+        options:
+          - lambda
+          - all
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements_mlops.txt
+          pip install pytest pytest-cov
+      
+      - name: Run tests
+        run: |
+          pytest tests/ -v --cov=mlops
+        continue-on-error: true
+      
+      - name: Lint code
+        run: |
+          pip install flake8
+          flake8 mlops/ lambda/ --max-line-length=120 --ignore=E501,W503
+        continue-on-error: true
+  
+  deploy-lambda:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event.inputs.deploy_target == 'lambda' || github.event.inputs.deploy_target == 'all' || github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      - name: Create AWS config
+        run: |
+          mkdir -p aws_config
+          cat > aws_config/.env.aws <<EOF
+          AWS_DEFAULT_REGION=${{ secrets.AWS_REGION }}
+          PROJECT_NAME=${{ secrets.PROJECT_NAME }}
+          S3_MODELS_BUCKET=${{ secrets.S3_MODELS_BUCKET }}
+          DYNAMODB_MODELS_TABLE=${{ secrets.DYNAMODB_MODELS_TABLE }}
+          EOF
+      
+      - name: Install deployment dependencies
+        run: |
+          pip install -r docker/requirements.lambda.txt --target lambda_deploy/
+      
+      - name: Package Lambda function
+        run: |
+          mkdir -p lambda_deploy
+          cp lambda/inference_handler.py lambda_deploy/
+          cp -r mlops lambda_deploy/
+          cp -r aws_config lambda_deploy/
+          cd lambda_deploy
+          zip -r9 ../lambda_function.zip .
+      
+      - name: Deploy to Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.PROJECT_NAME }}-inference \
+            --zip-file fileb://lambda_function.zip \
+            --region ${{ secrets.AWS_REGION }}
+      
+      - name: Update Lambda configuration
+        run: |
+          aws lambda update-function-configuration \
+            --function-name ${{ secrets.PROJECT_NAME }}-inference \
+            --timeout 300 \
+            --memory-size 1024 \
+            --environment "Variables={S3_MODELS_BUCKET=${{ secrets.S3_MODELS_BUCKET }},PROJECT_NAME=${{ secrets.PROJECT_NAME }}}" \
+            --region ${{ secrets.AWS_REGION }}
+      
+      - name: Wait for update to complete
+        run: |
+          aws lambda wait function-updated \
+            --function-name ${{ secrets.PROJECT_NAME }}-inference \
+            --region ${{ secrets.AWS_REGION }}
+      
+      - name: Test Lambda function
+        run: |
+          aws lambda invoke \
+            --function-name ${{ secrets.PROJECT_NAME }}-inference \
+            --payload '{"body": "{\"model_type\": \"classification\"}"}' \
+            response.json \
+            --region ${{ secrets.AWS_REGION }}
+          cat response.json
+      
+      - name: Deployment summary
+        run: |
+          echo "✅ Lambda function deployed successfully!"
+          FUNCTION_ARN=$(aws lambda get-function --function-name ${{ secrets.PROJECT_NAME }}-inference --region ${{ secrets.AWS_REGION }} --query 'Configuration.FunctionArn' --output text)
+          echo "Function ARN: $FUNCTION_ARN"
+

@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # Training service
+  oct-training:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.training
+    container_name: oct-mlops-training
+    volumes:
+      - ../data:/app/data
+      - ../classification_models:/app/classification_models
+      - ../results:/app/results
+      - ../aws_config/.env.aws:/app/aws_config/.env.aws:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+    command: python training_pipeline.py --experiment-name local-test
+    networks:
+      - oct-mlops-network
+  
+  # Local inference API (for testing)
+  oct-inference:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.inference
+    container_name: oct-mlops-inference
+    ports:
+      - "9000:8080"  # Lambda runtime interface
+    volumes:
+      - ../classification_models:/app/models:ro
+      - ../aws_config/.env.aws:/app/aws_config/.env.aws:ro
+    environment:
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+    networks:
+      - oct-mlops-network
+
+  # Web application (existing Flask app)
+  oct-webapp:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.webapp
+    container_name: oct-mlops-webapp
+    ports:
+      - "5000:5000"
+    volumes:
+      - ../uploads:/app/uploads
+      - ../results:/app/results
+      - ../predictions:/app/predictions
+      - ../classification_models:/app/classification_models:ro
+    environment:
+      - FLASK_ENV=development
+      - PYTHONUNBUFFERED=1
+    command: python app.py
+    networks:
+      - oct-mlops-network
+
+networks:
+  oct-mlops-network:
+    driver: bridge
+

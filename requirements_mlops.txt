@@ -1,0 +1,46 @@
+# MLOps Pipeline Requirements for AWS Integration
+
+# AWS SDK
+boto3>=1.28.0
+botocore>=1.31.0
+
+# Configuration Management
+python-dotenv>=1.0.0
+
+# Deep Learning (compatible with existing setup)
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Image Processing
+opencv-python>=4.8.0
+numpy>=1.24.0
+Pillow>=10.0.0
+
+# Experiment Tracking & Utilities
+pandas>=2.0.0
+matplotlib>=3.8.0
+seaborn>=0.12.0
+tqdm>=4.65.0
+
+# API Development
+fastapi>=0.103.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+
+# Model Optimization & Compression
+onnx>=1.14.0
+onnxruntime>=1.15.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+requests>=2.31.0
+
+# Code Quality
+black>=23.7.0
+flake8>=6.1.0
+mypy>=1.5.0
+
+# Monitoring & Logging
+watchtower>=3.0.1  # CloudWatch logging for Python
+

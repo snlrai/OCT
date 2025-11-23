@@ -1,0 +1,169 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 0,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "OCT-MLOps", "InferenceLatency", { "stat": "Average", "label": "Avg Latency" } ],
+          [ "...", { "stat": "Maximum", "label": "Max Latency" } ],
+          [ "...", { "stat": "p95", "label": "p95 Latency" } ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "Inference Latency",
+        "period": 300,
+        "yAxis": {
+          "left": {
+            "label": "Milliseconds"
+          }
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 0,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "OCT-MLOps", "InferenceSuccess", { "stat": "Sum", "label": "Total Requests" } ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "Inference Requests",
+        "period": 300,
+        "yAxis": {
+          "left": {
+            "label": "Count"
+          }
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 6,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "OCT-MLOps", "InferenceConfidence", { "stat": "Average" } ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "Model Confidence",
+        "period": 300,
+        "yAxis": {
+          "left": {
+            "min": 0,
+            "max": 1,
+            "label": "Confidence Score"
+          }
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 6,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "AWS/Lambda", "Invocations", { "stat": "Sum" } ],
+          [ ".", "Errors", { "stat": "Sum" } ],
+          [ ".", "Throttles", { "stat": "Sum" } ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "Lambda Metrics",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 12,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "OCT-MLOps", "TrainLoss", { "stat": "Average" } ],
+          [ ".", "ValLoss", { "stat": "Average" } ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "Training Loss",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 8,
+      "y": 12,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "OCT-MLOps", "TrainAccuracy", { "stat": "Average" } ],
+          [ ".", "ValAccuracy", { "stat": "Average" } ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "Training Accuracy",
+        "period": 300,
+        "yAxis": {
+          "left": {
+            "min": 0,
+            "max": 100,
+            "label": "Percent"
+          }
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 16,
+      "y": 12,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "AWS/DynamoDB", "ConsumedReadCapacityUnits", { "stat": "Sum" } ],
+          [ ".", "ConsumedWriteCapacityUnits", { "stat": "Sum" } ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "DynamoDB Capacity",
+        "period": 300
+      }
+    },
+    {
+      "type": "log",
+      "x": 0,
+      "y": 18,
+      "width": 24,
+      "height": 6,
+      "properties": {
+        "query": "SOURCE '/aws/mlops/oct-mlops'\n| fields @timestamp, @message\n| sort @timestamp desc\n| limit 50",
+        "region": "us-east-1",
+        "stacked": false,
+        "title": "Recent Application Logs",
+        "view": "table"
+      }
+    }
+  ]
+}
+

@@ -1,0 +1,18 @@
+# Ignore actual AWS credentials
+.env.aws
+*.pem
+*.key
+
+# Terraform state files
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# AWS CLI cache
+.aws/
+
+# Python cache
+__pycache__/
+*.pyc
+

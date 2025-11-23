@@ -1,0 +1,44 @@
+# OCT MLOps Training Container
+# Optimized for EC2 t2.micro with GPU support (if available)
+
+FROM python:3.9-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements_mlops.txt .
+COPY requirements_preprocessing.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements_mlops.txt && \
+    pip install --no-cache-dir -r requirements_preprocessing.txt
+
+# Copy MLOps modules
+COPY mlops/ ./mlops/
+COPY aws_config/ ./aws_config/
+COPY scripts/ ./scripts/
+
+# Copy training scripts (will be created)
+COPY training_pipeline.py .
+COPY data_loader.py .
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV AWS_DEFAULT_REGION=us-east-1
+
+# Entrypoint
+CMD ["python", "training_pipeline.py"]
+

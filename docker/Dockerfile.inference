@@ -1,0 +1,26 @@
+# OCT MLOps Inference Container
+# Optimized for AWS Lambda deployment (<512MB)
+
+FROM public.ecr.aws/lambda/python:3.9
+
+# Install system dependencies (minimal)
+RUN yum install -y \
+    libgomp \
+    && yum clean all
+
+# Copy requirements (minimal subset for inference)
+COPY docker/requirements.lambda.txt .
+RUN pip install --no-cache-dir -r requirements.lambda.txt
+
+# Copy inference code
+COPY lambda/inference_handler.py ${LAMBDA_TASK_ROOT}/
+COPY mlops/config.py ${LAMBDA_TASK_ROOT}/mlops/
+COPY mlops/model_registry.py ${LAMBDA_TASK_ROOT}/mlops/
+COPY mlops/__init__.py ${LAMBDA_TASK_ROOT}/mlops/
+
+# Copy model architectures
+COPY models_arch/ ${LAMBDA_TASK_ROOT}/models_arch/
+
+# Set handler
+CMD ["inference_handler.lambda_handler"]
+
